@@ -143,7 +143,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-For questions or collaborations, please contact: [your.email@domain.com]
+For questions or collaborations, please contact: mohamedakram.lamhour@edu.uiz.ac.ma
 
 ## Acknowledgments
 
