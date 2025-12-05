@@ -1,0 +1,22 @@
+
+ATTENTION WEIGHT ANALYSIS SUMMARY
+=====================================
+
+Dataset: 189,534 test samples
+Timesteps: 15
+
+TOP 3 MOST ATTENDED TIMESTEPS:
+  t-1: 0.133255
+  t-2: 0.110621
+  t-3: 0.093594
+
+ATTENTION CONCENTRATION:
+  Mean Gini Coefficient: -0.2135
+  Highly concentrated (Gini > 0.5): 0.0%
+
+DIVERGENCE FROM UNIFORM:
+  Mean KL Divergence: 0.0759
+  Significantly non-uniform (KL > 0.1): 16.1%
+
+Note: Sample metrics saved for 10,000 randomly selected samples.
+All visualizations use appropriate subsampling for memory efficiency.
