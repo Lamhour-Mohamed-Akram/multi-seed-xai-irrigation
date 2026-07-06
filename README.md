@@ -9,7 +9,6 @@
 This repository provides the code, data, and trained models to reproduce the experiments presented in:
 
 > **Multi-Seed XAI Validation for Reliable LSTM Irrigation Control in Greenhouse Environments**  
-> *IEEE Access, 2025*
 
 We propose a multi-seed validation framework that combines SHAP (SHapley Additive exPlanations) and attention mechanisms to identify stable, reproducible feature importance rankings for LSTM-based irrigation prediction in greenhouse environments.
 
@@ -145,7 +144,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions or collaborations, please contact: mohamed.lamhour-etu@etu.univh2c.ma
 
-## Acknowledgments
-
-- This research was supported by [funding agency/grant number]
-- Greenhouse data collection was facilitated by [institution/collaborators]
