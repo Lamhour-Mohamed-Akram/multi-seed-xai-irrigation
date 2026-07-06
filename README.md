@@ -4,143 +4,121 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![TensorFlow 2.x](https://img.shields.io/badge/TensorFlow-2.x-orange.svg)](https://www.tensorflow.org/)
 
-## Overview
+Code, data, trained models, and results for the IEEE Access manuscript:
 
-This repository provides the code, data, and trained models to reproduce the experiments presented in:
+> **Multi-Seed XAI Validation for Reliable LSTM Irrigation Control**
+> M. A. Lamhour, M. Msalek, S. Ardchir, M. Ghazouani, and M. Azouazi
+> LTIM, Faculty of Sciences Ben M'Sik, Hassan II University, Casablanca, Morocco
 
-> **Multi-Seed XAI Validation for Reliable LSTM Irrigation Control in Greenhouse Environments**  
+We audit training stability and explanation reliability for LSTM greenhouse irrigation controllers using multi-seed training audits (n=8, extended to n=16), bootstrap SHAP with 95% confidence intervals (200 stratified instances, 1,000 iterations), attention-augmented architectures, and MC-dropout uncertainty estimation — plus cross-dataset validation on an independent greenhouse (Tikrit University, Iraq).
 
-We propose a multi-seed validation framework that combines SHAP (SHapley Additive exPlanations) and attention mechanisms to identify stable, reproducible feature importance rankings for LSTM-based irrigation prediction in greenhouse environments.
+## Key Findings
 
-## Key Contributions
-
-1. **Multi-seed stability analysis**: Quantifies explanation consistency across 30 independent training seeds
-2. **Dual XAI validation**: Cross-validates SHAP and attention-based feature rankings
-3. **Domain-aligned interpretability**: Demonstrates that stable explanations align with agronomic principles
-4. **Practical irrigation insights**: Soil moisture identified as dominant predictor (SHAP importance: 0.847 ± 0.012)
+1. **Hidden training brittleness**: Vanilla LSTMs failed catastrophically in 7 of 8 training runs (87.5%) despite smooth validation curves, producing strongly negative test R². Failures are invisible in single-seed reporting.
+2. **Attention stabilizes training**: Bahdanau attention-LSTMs converged in 6/8 seeds (75%), with the best seed reaching R² = 0.95 (MAE = 0.0021); the model selected for XAI analysis achieved R² = 0.83 (MAE = 0.003).
+3. **Statistically grounded explanations**: Bootstrap SHAP identifies soil moisture as the dominant driver (97% of total importance) with non-overlapping confidence intervals (SE = 0.00005).
+4. **Explanation divergence flags risk**: SHAP–attention divergence (D > 0.124, 75th percentile) marks predictions with 21% higher error, correlating with MC-dropout uncertainty (r = 0.42).
+5. **Protocol portability**: The complete pipeline transferred without modification to the Iraq dataset (37,922 samples, arid climate, binary pump target): 8/8 seed convergence for both architectures, humidity dominance (96.9%), while SHAP–attention alignment proved dataset-dependent (r = 0.19 vs. r = 0.86 on Morocco).
 
 ## Repository Structure
 
 ```
 ├── notebooks/
-│   ├── 01_data_preprocessing.ipynb      # Data cleaning and feature engineering
-│   ├── 02_baseline_lstm_model.ipynb     # Baseline LSTM training
-│   ├── 03_shap_explainability.ipynb     # SHAP analysis with multi-seed validation
-│   ├── 04_attention_lstm_model.ipynb    # Attention-enhanced LSTM
-│   └── 05_attention_visualizations.ipynb # Attention weight analysis
+│   ├── 01_data_preprocessing.ipynb        # Data cleaning, windowing, chronological split
+│   ├── 02_baseline_lstm_model.ipynb       # 8-seed baseline LSTM training + MC-dropout
+│   ├── 03_shap_explainability.ipynb       # Initial SHAP analysis
+│   ├── 04_attention_lstm_model.ipynb      # Attention-LSTM training
+│   ├── 05_attention_visualizations.ipynb  # Attention weight diagnostics
+│   ├── 06_reviewer_experiments.ipynb      # Simpler baselines, MC-dropout (attention), perturbation,
+│   │                                      #   hyperparameter sensitivity, latency, window sensitivity
+│   ├── 06b_remaining_experiments.ipynb    # Continuation of 06 (rebuilt model loading)
+│   ├── 07_architecture_comparison.ipynb   # GRU / TCN / Transformer vs. attention-LSTM (4 seeds each)
+│   ├── 07b_shap_validation.ipynb          # SHAP ranking stability across subset sizes
+│   ├── 08_regenerate_all_results.ipynb    # Regenerates/verifies all manuscript numbers
+│   ├── 09_8seed_attention_training.ipynb  # 8-seed attention-LSTM on full data
+│   ├── 10_prepare_kaggle_upload.ipynb     # Packages files for Kaggle GPU runs
+│   ├── 11_kaggle_shap_200instances.ipynb  # Bootstrap SHAP, 200 stratified instances (Kaggle GPU T4)
+│   └── 12_kaggle_cross_validation_iraq.ipynb  # Full protocol on IoT Agriculture 2024 (Iraq)
 ├── data/
-│   └── data.csv                         # Greenhouse sensor dataset (N=52,596)
+│   └── data.csv                           # Greenhouse sensor dataset (947,682 readings, 5-min interval)
 ├── results/
-│   ├── models/                          # Trained model weights (.h5)
-│   ├── figures/                         # Generated figures
-│   └── tables/                          # Result tables
+│   ├── models/                            # Trained model weights (.h5)
+│   ├── figures/                           # Manuscript figures
+│   ├── tables/                            # Result tables (per-seed metrics, comparisons, sensitivity)
+│   ├── shap_200/                          # 200-instance SHAP arrays + bootstrap importance (1,000 iter)
+│   └── iraq/                              # Cross-dataset validation outputs (Tikrit University, Iraq)
+├── requirements.txt
 └── README.md
 ```
+
+## Datasets
+
+**Primary (Morocco).** 947,682 sensor readings from a tomato greenhouse in Casablanca (Mediterranean climate), recorded at 5-minute intervals over nine months (January–September 2022). Six sensors: air temperature, relative humidity, luminosity, CO₂, soil moisture, soil temperature. Target: normalized valve opening command (continuous, 0–1). Preprocessing (interpolation of <0.4% dropouts, MinMax scaling, 15-timestep sliding windows, 80/20 chronological split) is performed in `notebooks/01_data_preprocessing.ipynb`.
+
+**Cross-validation (Iraq).** [IoT Agriculture 2024](https://www.kaggle.com/datasets/wisam1985/iot-agriculture-2024) — 37,922 readings from a smart greenhouse at Tikrit University (arid climate). Features: temperature, humidity, water level, N, P, K. Target: binary pump command. Processed entirely in `notebooks/12_kaggle_cross_validation_iraq.ipynb`.
+
+## Headline Results
+
+### Model performance (best seed, Morocco test set)
+
+| Model | RMSE | MAE | R² |
+| ------- | ---- | --- | --- |
+| Linear Regression | 0.0041 | 0.0019 | 0.967 |
+| Ridge Regression | 0.0038 | 0.0018 | 0.972 |
+| SVR (RBF) | 0.0374 | 0.0087 | −1.748 |
+| Random Forest | 0.0280 | 0.0196 | −0.536 |
+| Gradient Boosting | 0.0249 | 0.0164 | −0.223 |
+| Baseline LSTM | 0.0185 | 0.0090 | 0.327 |
+| **Attention-LSTM** | **0.0094** | **0.0030** | **0.827** |
+
+Ridge outperforms both LSTMs in aggregate accuracy — the paper's contribution is the *validation protocol* (multi-seed auditing, bootstrap SHAP, divergence monitoring), not a claim of model superiority.
+
+### Multi-seed convergence (16 seeds, 100K subset)
+
+| Threshold | Baseline LSTM | Attention-LSTM |
+| --------- | ------------- | -------------- |
+| R² > 0.0 | 6/16 (37.5%) | 12/16 (75.0%) |
+| R² > 0.5 | 4/16 (25.0%) | 11/16 (68.8%) |
+| R² > 0.7 | 3/16 (18.8%) | 10/16 (62.5%) |
 
 ## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/[username]/multi-seed-xai-irrigation.git
+git clone https://github.com/Lamhour-Mohamed-Akram/multi-seed-xai-irrigation.git
 cd multi-seed-xai-irrigation
 
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Requirements
+Note: `data.csv` and `.npy`/`.h5`/`.pkl` files are stored with [Git LFS](https://git-lfs.com) — install it (`git lfs install`) before cloning to fetch the full files.
 
-- Python ≥ 3.8
-- TensorFlow ≥ 2.10
-- SHAP ≥ 0.41
-- NumPy ≥ 1.21
-- Pandas ≥ 1.4
-- Matplotlib ≥ 3.5
-- Scikit-learn ≥ 1.0
+## Reproducing the Experiments
 
-## Quick Start
+Run notebooks in order. Hardware notes:
 
-Run the notebooks in sequential order:
-
-```bash
-jupyter notebook notebooks/01_data_preprocessing.ipynb
-```
-
-Or execute all analyses:
-
-```bash
-# Preprocess data
-jupyter nbconvert --execute notebooks/01_data_preprocessing.ipynb
-
-# Train baseline model
-jupyter nbconvert --execute notebooks/02_baseline_lstm_model.ipynb
-
-# Run SHAP analysis (30 seeds)
-jupyter nbconvert --execute notebooks/03_shap_explainability.ipynb
-
-# Train attention model
-jupyter nbconvert --execute notebooks/04_attention_lstm_model.ipynb
-
-# Generate attention visualizations
-jupyter nbconvert --execute notebooks/05_attention_visualizations.ipynb
-```
-
-## Dataset
-
-The dataset contains 52,596 observations from a greenhouse in Morocco, collected at 15-minute intervals:
-
-| Feature | Description | Unit |
-|---------|-------------|------|
-| Temperature | Air temperature | °C |
-| Humidity | Relative humidity | % |
-| Soil_Moisture | Volumetric soil water content | % |
-| Solar_Radiation | Incoming solar radiation | W/m² |
-| Wind_Speed | Wind velocity | m/s |
-| Irrigation_Amount | Target variable (water applied) | L/m² |
-
-## Results Summary
-
-### Multi-Seed Feature Importance Stability
-
-| Feature | SHAP Mean ± Std | Attention Mean ± Std | Spearman ρ |
-|---------|-----------------|---------------------|------------|
-| Soil Moisture | 0.847 ± 0.012 | 0.312 ± 0.018 | 0.89 |
-| Temperature | 0.623 ± 0.034 | 0.245 ± 0.022 | 0.84 |
-| Solar Radiation | 0.456 ± 0.028 | 0.198 ± 0.015 | 0.81 |
-
-### Model Performance
-
-| Metric | Baseline LSTM | Attention LSTM |
-|--------|---------------|----------------|
-| RMSE | 0.142 | 0.138 |
-| MAE | 0.098 | 0.094 |
-| R² | 0.923 | 0.931 |
+- **01–09**: run locally (CPU is sufficient; full multi-seed training takes ~8 h on an Intel i7-10750H).
+- **11–12**: designed for **Kaggle GPU (Tesla T4)** — bootstrap SHAP on 200 instances involves ~20M model calls. Upload the files produced by notebook 10 as a Kaggle dataset, then run 11/12 there.
+- Precomputed outputs for every stage are included in `results/`, so any notebook can be inspected against its expected outputs without re-running the full pipeline.
 
 ## Citation
 
-If you use this code or data in your research, please cite:
-
 ```bibtex
-@article{author2025multiseed,
-  title={Multi-Seed XAI Validation for Reliable LSTM Irrigation Control in Greenhouse Environments},
-  author={[Author Names]},
+@article{lamhour2026multiseed,
+  title={Multi-Seed XAI Validation for Reliable LSTM Irrigation Control},
+  author={Lamhour, Mohamed Akram and Msalek, Mohamed and Ardchir, Soufiane and Ghazouani, Mohamed and Azouazi, Mohamed},
   journal={IEEE Access},
-  year={2025},
-  volume={},
-  pages={},
-  doi={}
+  year={2026},
+  note={Under review}
 }
 ```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
 
 ## Contact
 
-For questions or collaborations, please contact: mohamed.lamhour-etu@etu.univh2c.ma
-
+Mohamed Akram Lamhour — <mohamed.lamhour-etu@etu.univh2c.ma>
+LTIM (Laboratoire de Technologies de l'Information et Modélisation), Hassan II University, Casablanca, Morocco
