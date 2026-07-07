@@ -40,7 +40,7 @@ We audit training stability and explanation reliability for LSTM greenhouse irri
 │   ├── 11_kaggle_shap_200instances.ipynb  # Bootstrap SHAP, 200 stratified instances (Kaggle GPU T4)
 │   └── 12_kaggle_cross_validation_iraq.ipynb  # Full protocol on IoT Agriculture 2024 (Iraq)
 ├── data/
-│   └── data.csv                           # Greenhouse sensor dataset (947,682 readings, 5-min interval)
+│   └── data.csv                           # Greenhouse sensor dataset (947,682 records, 18 Apr-22 May 2022)
 ├── results/
 │   ├── models/                            # Trained model weights (.h5)
 │   ├── figures/                           # Manuscript figures
@@ -53,7 +53,7 @@ We audit training stability and explanation reliability for LSTM greenhouse irri
 
 ## Datasets
 
-**Primary (Morocco).** 947,682 sensor readings from a tomato greenhouse in Casablanca (Mediterranean climate), recorded at 5-minute intervals over nine months (January–September 2022). Six sensors: air temperature, relative humidity, luminosity, CO₂, soil moisture, soil temperature. Target: normalized valve opening command (continuous, 0–1). Preprocessing (interpolation of <0.4% dropouts, MinMax scaling, 15-timestep sliding windows, 80/20 chronological split) is performed in `notebooks/01_data_preprocessing.ipynb`.
+**Primary (Morocco).** 947,682 sensor records from a tomato greenhouse in Casablanca (Mediterranean climate), logged between 18 April and 22 May 2022 (34 days). The acquisition system wrote bursts of near-simultaneous readings approximately every minute, yielding dense but temporally redundant coverage. Six sensors: air temperature, relative humidity, luminosity, CO₂, soil moisture, soil temperature. Target: normalized valve opening command (continuous, 0–1). Preprocessing (interpolation of <0.4% missing/implausible values, MinMax scaling, sliding windows of 15 consecutive records, 80/20 chronological split) is performed in `notebooks/01_data_preprocessing.ipynb`.
 
 **Cross-validation (Iraq).** [IoT Agriculture 2024](https://www.kaggle.com/datasets/wisam1985/iot-agriculture-2024) — 37,922 readings from a smart greenhouse at Tikrit University (arid climate). Features: temperature, humidity, water level, N, P, K. Target: binary pump command. Processed entirely in `notebooks/12_kaggle_cross_validation_iraq.ipynb`.
 
